@@ -431,7 +431,7 @@ function render(){
   wireStages(P);
 }
 function mapHtml(){
-  return `<nav class="map" aria-label="מפת שלבים"><a href="index.html">שער</a><a href="level1.html">1 · אמינו</a><span class="here">2 · חלבונים</span></nav>`;
+  return `<nav class="map" aria-label="מפת שלבים"><a href="index.html">שער</a><span class="here">2 · חלבונים</span><a href="level3.html">3 · אנזימים</a></nav>`;
 }
 function intro(){
   const resume=S.maxM>0||S.done;
@@ -441,7 +441,7 @@ function intro(){
   <label class="small" for="nm">איך לחתום על הכתבה?</label>
   <input class="name" id="nm" maxlength="14" value="${nm()}" autocomplete="name">
   <div id="go"></div>
-  <p class="note">חמש משימות. ההתקדמות נשמרת בדפדפן הזה. שלב 3 ייפתח אחרי האישור שלך.</p>`;
+  <p class="note">חמש משימות. ההתקדמות נשמרת בדפדפן הזה. הגיליון הבא: אנזימים.</p>`;
   const go=$('#go');
   const start=k=>{S.name=($('#nm').value.trim()||'שחקנית').slice(0,14);hud();beep([523,784]);goMission(k)};
   if(resume){
@@ -663,7 +663,7 @@ function finale(){
       <li>אנפינסן: הריבונוקלאז חזר למבנה הפעיל. המידע היה ברצף.</li>
     </ul>
     <div id="fin"></div>
-    <p class="note">שלב 3, אנזימים, עוד לא נפתח. מחכים לאישור שלך.</p>`;
+    <p class="note">הגיליון הבא כבר בדפוס: אנזימים.</p>`;
   const f=$('#fin');
   if(st<3) f.appendChild(nextBtn('עוד ראיון, בשביל שלושה כוכבים',()=>goMission(4)));
   const again=document.createElement('button'); again.className='btn ghost big'; again.type='button'; again.textContent='לשחק את השלב מההתחלה';
