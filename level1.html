@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>חדשות התא · שלב 1 · חומצות אמינו ופפטידים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Pixels&family=Rubik:wght@400;500;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1d1430; --paper:#fff8e1; --yel:#ffe14d; --pink:#ff4fa3; --cyan:#3be0ff; --sky:#7cc8ff;
+  --grn:#5ee27a; --org:#ff9a3c; --red:#ff4b4b; --pur:#9b6bff;
+  --px:'Rubik Pixels','Rubik','Heebo','Arial Hebrew',system-ui,sans-serif;
+  --body:'Rubik','Heebo','Segoe UI','Arial Hebrew',system-ui,sans-serif;
+  --num:'Press Start 2P',ui-monospace,'Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--body);color:var(--ink);line-height:1.45;min-height:100vh;min-height:100dvh;
+  background:#2a1b4a repeating-conic-gradient(#2a1b4a 0 25%,#31205a 0 50%) 0 0/12px 12px;}
+button{font-family:inherit;color:inherit}
+.f{direction:ltr;unicode-bidi:isolate;white-space:nowrap;font-weight:700}
+.hidden{display:none!important}
+
+/* HUD */
+.hud{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:6px 10px;background:var(--yel);border-bottom:3px solid var(--ink);height:52px}
+.mast{display:flex;flex-direction:column;min-width:0}
+.mast-t{font-family:var(--px);font-size:22px;line-height:1;color:inherit;text-decoration:none}
+.mast-s{font-size:11px;font-weight:700;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-r{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.pill{background:#fff;border:2px solid var(--ink);padding:2px 6px;font-weight:800;font-size:12px;max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score{font-family:var(--num);font-size:10px;background:var(--ink);color:var(--yel);padding:5px 6px;border:2px solid var(--ink);min-width:40px;text-align:center}
+.streak{display:flex;gap:2px;direction:ltr;align-items:center}
+.streak i{width:7px;height:14px;background:#fff;border:2px solid var(--ink)}
+.streak i.on{background:var(--pink)}
+.streak.hot i.on{background:var(--org);box-shadow:0 0 0 1px var(--yel)}
+.icon-btn{width:36px;height:36px;border:2px solid var(--ink);background:#fff;display:grid;place-items:center;cursor:pointer}
+.icon-btn svg{width:20px;height:20px}
+
+/* layout */
+.layout{max-width:1240px;margin:0 auto}
+.worldwrap{position:sticky;top:52px;z-index:10;background:#2a1b4a}
+.world{position:relative;width:100%;aspect-ratio:176/100;border-bottom:3px solid var(--ink);overflow:hidden;touch-action:manipulation}
+.world canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.ov{position:absolute;inset:0;pointer-events:none;direction:ltr}
+.lab{position:absolute;transform:translate(-50%,-50%);font-size:9px;font-weight:800;white-space:nowrap;color:#fff;
+  text-shadow:1px 1px 0 var(--ink),-1px 1px 0 var(--ink),1px -1px 0 var(--ink),-1px -1px 0 var(--ink)}
+.lab.dark{color:var(--ink);text-shadow:none}
+.lab.tick{font-size:8px;opacity:.9}
+.lab.pi{background:var(--yel);color:var(--ink);text-shadow:none;border:2px solid var(--ink);padding:0 3px;font-size:9px}
+.lab.pi.ghost{background:rgba(255,255,255,.6);border-style:dashed}
+.cbadge{position:absolute;transform:translate(-50%,-100%);background:#fff;border:2px solid var(--ink);font-size:9px;font-weight:800;padding:0 4px;white-space:nowrap;direction:rtl}
+.cbadge b{font-family:var(--num);font-size:8px;direction:ltr;unicode-bidi:isolate}
+.phchip{position:absolute;right:4px;top:4px;background:var(--ink);color:var(--yel);font-family:var(--num);font-size:8px;padding:3px 5px}
+.floater{position:absolute;transform:translate(-50%,-100%);font-family:var(--num);font-size:10px;color:var(--yel);
+  text-shadow:2px 2px 0 var(--ink);animation:rise 1.1s ease-out forwards;white-space:nowrap}
+.floater.bad{color:#fff}
+.floater.water{color:var(--cyan)}
+@keyframes rise{from{opacity:1;margin-top:0}to{opacity:0;margin-top:-34px}}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+/* panel */
+.panel{margin:12px 10px 40px;background:var(--paper);border:3px solid var(--ink);box-shadow:6px 6px 0 rgba(0,0,0,.45);padding:12px 12px 16px}
+.map{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:0 0 12px}
+.map a,.map span{display:flex;align-items:center;justify-content:center;min-height:44px;border:2px solid var(--ink);background:#fff;font-size:13px;font-weight:800;text-align:center;text-decoration:none;color:inherit;padding:4px;line-height:1.2}
+.map .here{background:var(--pink);color:#fff}
+.stages{list-style:none;display:flex;gap:4px;margin:0 0 10px}
+.stages li{flex:1}
+.stages button{width:100%;min-height:38px;border:2px solid var(--ink);background:#fff;font-size:11px;font-weight:800;cursor:pointer;padding:2px;line-height:1.1}
+.stages button[disabled]{background:#e6dcc4;color:#8b7f99;cursor:not-allowed}
+.stages .now{background:var(--pink);color:#fff}
+.stages .done{background:var(--grn)}
+.kicker{display:inline-block;background:var(--ink);color:var(--yel);font-size:12px;font-weight:800;padding:2px 8px;margin-bottom:6px}
+.headline{font-family:var(--body);font-weight:800;font-size:24px;line-height:1.2;margin-bottom:8px;text-shadow:2px 2px 0 var(--yel),3px 3px 0 var(--pink)}
+.lede{font-size:15px;margin-bottom:10px}
+.rule{border:0;border-top:3px dotted var(--ink);margin:10px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:10px 18px;font-size:16px;font-weight:800;
+  background:var(--yel);border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink);cursor:pointer;margin-top:10px;touch-action:manipulation;text-decoration:none;color:inherit}
+.btn.pink{color:#fff}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn.pink{background:var(--pink);color:#fff}
+.btn.ghost{background:#fff}
+.btn.big{width:100%}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+input.name{width:100%;min-height:48px;border:3px solid var(--ink);font:inherit;font-size:18px;font-weight:700;padding:6px 10px;background:#fff;text-align:center}
+label.small{display:block;font-size:13px;font-weight:700;margin:10px 0 4px}
+.note{font-size:12px;opacity:.75;margin-top:8px}
+
+/* feedback */
+.fb:empty{display:none}
+.fb{margin-top:12px}
+.corr,.scoop{border:3px solid var(--ink);padding:8px 10px;position:relative;animation:pop .25s}
+.corr{background:#fff;border-style:dashed}
+.scoop{background:#e9ffe6}
+.stamp{display:inline-block;background:var(--red);color:#fff;font-weight:800;font-size:12px;padding:1px 8px;transform:rotate(-3deg);margin-bottom:4px}
+.scoop .stamp{background:var(--grn);color:var(--ink)}
+.corr p,.scoop p{font-size:14px}
+.corr .why{margin-top:4px;font-weight:700}
+@keyframes pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
+
+/* build */
+.mol{display:grid;grid-template-columns:1fr 64px 1fr;grid-template-rows:auto 64px auto;gap:10px;align-items:center;justify-items:center;
+  margin:6px auto 4px;max-width:340px;padding:10px;background:repeating-linear-gradient(0deg,#fff 0 11px,#f1e8ff 11px 12px),#fff;border:3px solid var(--ink)}
+.ca{grid-column:2;grid-row:2;width:64px;height:64px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:22px;font-weight:800;position:relative}
+.ca sub{font-size:13px}
+.chir{position:absolute;top:-10px;right:-14px;font-style:normal;font-size:9px;background:var(--grn);color:var(--ink);border:2px solid var(--ink);padding:0 3px;white-space:nowrap}
+.chir.no{background:var(--red);color:#fff}
+.chir:empty{display:none}
+.slot{min-width:72px;min-height:44px;border:3px dashed var(--ink);display:grid;place-items:center;font-weight:800;font-size:15px;background:rgba(255,255,255,.8);padding:2px 6px;position:relative;text-align:center}
+.slot.filled{border-style:solid;background:var(--cyan);animation:pop .25s}
+.slot.r.filled{background:var(--pink);color:#fff}
+.slot .chg{position:absolute;top:-9px;left:-9px;width:20px;height:20px;border:2px solid var(--ink);display:grid;place-items:center;font-size:13px;background:var(--yel)}
+.s-top{grid-column:2;grid-row:1}.s-left{grid-column:1;grid-row:2;justify-self:end}.s-right{grid-column:3;grid-row:2;justify-self:start}.s-bot{grid-column:2;grid-row:3}
+.mol.hover{outline:4px solid var(--pink)}
+.tray{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px;direction:ltr}
+.chip{min-width:72px;min-height:48px;padding:6px 10px;border:3px solid var(--ink);background:#fff;font-size:16px;font-weight:800;box-shadow:0 4px 0 var(--ink);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.chip.dragging{opacity:.35}
+.chip.nope{animation:shake .35s;background:#ffd6d6}
+.ghostchip{position:fixed;z-index:99;pointer-events:none;transform:translate(-50%,-60%) rotate(-4deg);margin:0}
+.task-title{font-weight:800;font-size:15px;margin:12px 0 6px;background:var(--yel);display:inline-block;padding:1px 6px;border:2px solid var(--ink)}
+.rrow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;direction:ltr}
+.rbtn{min-height:48px;border:3px solid var(--ink);background:#fff;font-weight:800;font-size:13px;cursor:pointer;padding:4px;overflow-wrap:anywhere}
+.rbtn.tried{background:#f1e8ff}
+.rbtn.sel{background:var(--pink);color:#fff}
+.idcard{margin-top:8px;border:3px solid var(--ink);background:#fff;padding:6px 10px;font-size:14px}
+.idcard:empty{display:none}
+
+/* mcq */
+.q{font-weight:800;font-size:16px;margin:10px 0 6px}
+.opts{display:grid;gap:8px}
+.opt{min-height:48px;text-align:right;padding:8px 12px;border:3px solid var(--ink);background:#fff;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+.opt.right{background:var(--grn);animation:pop .25s}
+.opt.wrong{background:#ffd6d6;text-decoration:line-through;text-decoration-thickness:2px}
+.opt[disabled]{cursor:default}
+
+/* pI */
+.groups{display:grid;gap:6px;margin:6px 0}
+.grow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;border:2px solid var(--ink);background:#fff;padding:4px 8px;font-size:13px}
+.grow small{display:block;font-size:10px;opacity:.7;font-weight:700}
+.grow .form{font-weight:800;padding:1px 6px;border:2px solid var(--ink);min-width:56px;text-align:center}
+.grow .form.neg{background:var(--cyan)} .grow .form.pos{background:var(--pink);color:#fff} .grow .form.neu{background:#eee}
+.grow .ch{font-family:var(--num);font-size:9px;min-width:46px;text-align:right}
+.grow .bar{grid-column:1/-1;height:6px;background:#eee;border:1px solid var(--ink);position:relative}
+.grow .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--pink)}
+.meter{margin:10px 0 4px}
+.mscale{display:flex;justify-content:space-between;font-family:var(--num);font-size:8px;margin-bottom:2px}
+.mbar{height:22px;border:3px solid var(--ink);background:linear-gradient(90deg,var(--pink),#fff 33.3%,var(--cyan));position:relative}
+.mbar .zero{position:absolute;left:33.3%;top:-6px;bottom:-6px;width:3px;background:var(--ink)}
+.mbar i{position:absolute;top:-8px;width:12px;height:32px;margin-left:-6px;background:var(--yel);border:3px solid var(--ink);transition:left .08s}
+.mval{font-size:15px;font-weight:800;text-align:center;margin-top:8px}.mval .f{font-family:var(--num);font-size:14px}
+.mval.zero{color:#118a3c}
+.phctl{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:center;margin-top:10px}
+.nud{height:48px;border:3px solid var(--ink);background:#fff;font-size:22px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;touch-action:none}
+input[type=range]::-webkit-slider-runnable-track{height:12px;border:3px solid var(--ink);background:linear-gradient(90deg,#ff6b6b,#ffe14d 30%,#5ee27a 50%,#3be0ff 75%,#9b6bff)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:32px;margin-top:-13px;background:#fff;border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
+input[type=range]::-moz-range-track{height:8px;border:3px solid var(--ink);background:linear-gradient(90deg,#ff6b6b,#ffe14d 30%,#5ee27a 50%,#3be0ff 75%,#9b6bff)}
+input[type=range]::-moz-range-thumb{width:24px;height:28px;border-radius:0;background:#fff;border:3px solid var(--ink)}
+.phread{text-align:center;font-family:var(--num);font-size:12px;margin-top:4px}
+.hint{min-height:20px;font-size:13px;font-weight:700;margin-top:6px;color:#5a2d91}
+.avg{font-family:var(--num);font-size:11px;line-height:2;text-align:center;background:var(--yel);border:3px solid var(--ink);padding:8px;margin:8px 0}
+.avg .k{background:#fff;border:2px solid var(--ink);padding:1px 4px}
+
+/* sort */
+.card{margin:8px auto;max-width:280px;border:3px solid var(--ink);background:#fff;box-shadow:0 5px 0 var(--ink);padding:10px;text-align:center;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.card .ab{font-family:var(--num);font-size:18px;display:block;margin-bottom:6px}
+.card .nm{font-weight:800;font-size:16px}
+.card .fr{display:block;direction:ltr;font-size:13px;font-weight:700;margin-top:4px;overflow-wrap:anywhere}
+.card.nope{animation:shake .35s}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.zone{min-height:72px;border:3px solid var(--ink);padding:6px;cursor:pointer;text-align:right;position:relative;box-shadow:0 3px 0 var(--ink)}
+.zone b{display:block;font-size:14px}
+.zone small{font-size:11px;font-weight:600}
+.zone .cnt{position:absolute;left:4px;bottom:3px;font-family:var(--num);font-size:8px}
+.z-hyd{background:#ffc078}.z-pol{background:#9ff0ff}.z-acid{background:#ff9ccc}.z-base{background:#c9b2ff}
+.zone.hover{outline:4px solid var(--ink);outline-offset:2px}
+.zone.flash{animation:pop .3s}
+.prog{font-family:var(--num);font-size:10px;text-align:center;margin-top:4px}
+
+/* peptide */
+.pep{display:grid;gap:10px;margin:8px 0}
+.aa{display:flex;align-items:center;justify-content:center;gap:2px;border:3px solid var(--ink);background:#fff;padding:8px 6px;position:relative;flex-wrap:wrap}
+.aa .tag{position:absolute;top:-10px;left:8px;background:var(--ink);color:var(--yel);font-size:10px;font-weight:800;padding:0 6px;font-family:var(--num)}
+.aa .core{font-weight:800;font-size:15px}
+.grp{min-height:48px;min-width:64px;border:3px solid var(--ink);background:var(--cyan);font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 3px 0 var(--ink)}
+.grp[data-g=C]{background:var(--pink);color:#fff}
+.grp.sel{outline:4px solid var(--yel);outline-offset:2px;transform:translateY(-2px)}
+.dipep{direction:ltr;text-align:center;font-weight:800;font-size:15px;border:3px solid var(--ink);background:#fff;padding:12px 6px;margin-top:8px;position:relative;overflow-wrap:anywhere}
+.dipep .bond{background:var(--yel);border:2px solid var(--ink);padding:0 3px}
+.water{position:absolute;left:50%;top:-6px;font-family:var(--num);font-size:11px;color:#0b6fa4;background:#d9f6ff;border:2px solid var(--ink);padding:2px 4px;animation:float 1.8s ease-out forwards}
+@keyframes float{from{transform:translate(-50%,0)}to{transform:translate(-50%,-48px);opacity:0}}
+
+/* boss */
+.bossbar{display:flex;gap:4px;direction:ltr;justify-content:center;margin:4px 0}
+.bossbar i{width:22px;height:10px;border:2px solid var(--ink);background:#fff}
+.bossbar i.ok{background:var(--grn)}.bossbar i.no{background:var(--red)}.bossbar i.cur{background:var(--yel)}
+.stars{font-size:38px;letter-spacing:6px;text-align:center;color:var(--org);text-shadow:3px 3px 0 var(--ink);margin:6px 0}
+.recap{margin:8px 18px 0;font-size:14px}
+.recap li{margin:3px 0}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin:8px 0}
+.stats3 div{border:2px solid var(--ink);background:#fff;padding:6px 2px;font-size:11px;font-weight:700}
+.stats3 b{display:block;font-family:var(--num);font-size:13px;margin-bottom:4px}
+
+@media (min-width:900px){
+  .layout{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;padding:18px;align-items:start}
+  .worldwrap{top:70px;background:transparent}
+  .world{border:3px solid var(--ink);box-shadow:6px 6px 0 rgba(0,0,0,.45)}
+  .lab{font-size:12px}.lab.tick{font-size:10px}.lab.pi{font-size:12px}
+  .cbadge{font-size:12px}.cbadge b{font-size:10px}.phchip{font-size:10px}
+  .panel{margin:0}
+  .headline{font-size:30px}
+  .hud{height:56px;padding:6px 18px}
+  .mast-t{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition:none!important}
+  .floater{animation:fadeonly 1.2s forwards!important;animation-duration:1.2s!important}
+  @keyframes fadeonly{0%,70%{opacity:1}100%{opacity:0}}
+}
+</style>
+</head>
+<body>
+<header class="hud">
+  <div class="mast">
+    <a class="mast-t" href="index.html">חדשות התא</a>
+    <span class="mast-s">גיליון 01 · חומצות אמינו ופפטידים</span>
+  </div>
+  <div class="hud-r">
+    <span class="pill" id="who" title="שם בעיתון">שחקנית</span>
+    <span class="streak" id="streak" aria-label="רצף"><i></i><i></i><i></i><i></i><i></i></span>
+    <span class="score" id="score" aria-label="נקודות">0</span>
+    <button class="icon-btn" id="mute" aria-label="השתקת צלילים" aria-pressed="false"></button>
+  </div>
+</header>
+<main class="layout">
+  <section class="worldwrap" aria-label="עולם העקומה">
+    <div class="world" id="world">
+      <canvas id="cv" width="176" height="100" role="img" aria-label="עקומת טיטרציה של אספרטט: pH מול שווי ערך של OH⁻. הדמות שלך הולכת עליה."></canvas>
+      <div class="ov" id="ov"></div>
+    </div>
+  </section>
+  <section class="panel" id="panel" aria-live="polite"></section>
+</main>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const RMQ=matchMedia('(prefers-reduced-motion: reduce)');
+let RM=RMQ.matches;
+if(RMQ.addEventListener) RMQ.addEventListener('change',e=>{RM=e.matches});
+
+/* ---------- state ---------- */
+const KEY='hadashot-hata-l1-v1';
+const DEF={name:'שחקנית',mission:-1,maxM:0,score:0,streak:0,best:0,pi:false,done:false,stars:0,mute:false,boss:0};
+function load(){try{return Object.assign({},DEF,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return Object.assign({},DEF)}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let S=load();
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nm=()=>esc(S.name||'שחקנית');
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* ---------- chemistry (Asp, values from the course file) ---------- */
+const PK=[1.88,3.65,9.60];
+const dep=(pk,pH)=>1/(1+Math.pow(10,pk-pH));          // fraction that gave up its proton
+const eqOf=pH=>dep(PK[0],pH)+dep(PK[1],pH)+dep(PK[2],pH); // equivalents of OH- added (idealised)
+const qOf=pH=>1-eqOf(pH);                                 // net charge of Asp
+function phOf(eq){let lo=-2,hi=16;for(let i=0;i<48;i++){const m=(lo+hi)/2;if(eqOf(m)<eq)lo=m;else hi=m}return(lo+hi)/2}
+const PI=(PK[0]+PK[1])/2; // 2.765 -> 2.77
+const EQMIN=eqOf(0.6), EQMAX=2.985;
+
+/* ---------- world geometry ---------- */
+const W=176,H=100,X0=30,X1=172,Y0=85,YT=6,PHMAX=13.5;
+const sx=eq=>X0+eq/3*(X1-X0);
+const sy=pH=>Y0-pH/PHMAX*(Y0-YT);
+const SEA=Math.round(sy(0.6))+1;
+const cv=$('#cv'),ctx=cv.getContext('2d');
+const bgA=document.createElement('canvas'),bgB=document.createElement('canvas');
+bgA.width=bgB.width=W;bgA.height=bgB.height=H;
+const groundY=new Array(W);
+function px(c,x,y,col,w=1,h=1){c.fillStyle=col;c.fillRect(x,y,w,h)}
+let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+
+function prerender(){
+  for(let x=0;x<W;x++){
+    const eq=(x+0.5-X0)/(X1-X0)*3;
+    groundY[x]= eq<EQMIN?null:Math.round(sy(phOf(Math.min(eq,EQMAX))));
+  }
+  // sky layer
+  const a=bgA.getContext('2d');
+  const sky=['#3b6cf0','#4a82fa','#5c98ff','#72aeff','#8cc4ff','#a6d8ff','#c2e9ff','#dbf4ff'];
+  const band=H/sky.length;
+  for(let y=0;y<H;y++){
+    const b=Math.min(sky.length-1,Math.floor(y/band));
+    const edge=(y%band)>band-3 && b<sky.length-1;
+    for(let x=0;x<W;x++){
+      px(a,x,y,(edge&&((x+y)%2===0))?sky[b+1]:sky[b]);
+    }
+  }
+  // sun
+  const sun=[[0,1,1,1,0],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[0,1,1,1,0]];
+  for(let j=0;j<5;j++)for(let i=0;i<5;i++)if(sun[j][i])px(a,42+i*2,8+j*2,'#ffe14d',2,2);
+  px(a,44,6,'#ffe14d',6,1);px(a,44,19,'#ffe14d',6,1);px(a,40,10,'#ffe14d',1,6);px(a,53,10,'#ffe14d',1,6);
+  // graph-paper grid in the sky
+  for(let t=0;t<=12;t+=2){const y=Math.round(sy(t));for(let x=X0;x<W;x+=3)if(groundY[x]===null||y<groundY[x])px(a,x,y,'rgba(255,255,255,.45)')}
+  for(let e=0;e<=3;e++){const x=Math.round(sx(e));for(let y=4;y<H;y+=3)if(groundY[x]===null||y<groundY[x])px(a,x,y,'rgba(255,255,255,.45)')}
+  // ground layer
+  const b=bgB.getContext('2d');
+  const strata=['#ffb347','#ff8f5a','#ff6f91','#d86bf0','#9b6bff','#6b7bff'];
+  seed=7;
+  for(let x=0;x<W;x++){
+    const g=groundY[x];
+    if(g===null){ // sea
+      for(let y=SEA;y<H;y++){
+        const deep=y>SEA+9;
+        px(b,x,y,deep?'#1b8fb5':'#2fc4d9');
+        if(y===SEA)px(b,x,y,'#9ff6ff');
+      }
+      for(let y=H-3;y<H;y++)px(b,x,y,(x+y)%2?'#ffd27a':'#f2b84b');
+      continue;
+    }
+    for(let y=g;y<H;y++){
+      const d=y-g;let col;
+      if(d===0)col='#c8ff8f';else if(d<=2)col='#5ee27a';else if(d===3)col='#2fae5a';
+      else{const s=Math.floor(y/6)%strata.length;const nxt=(s+1)%strata.length;col=((y%6)===5&&(x+y)%2)?strata[nxt]:strata[s];}
+      px(b,x,y,col);
+      if(d>4&&rnd()<0.035)px(b,x,y,'rgba(255,255,255,.55)');
+    }
+  }
+  // benches at pKa (buffer plateaus)
+  [0.5,1.5,2.5].forEach(e=>{const x=Math.round(sx(e)),g=groundY[x];
+    px(b,x-3,g-4,'#c2723f',7,1);px(b,x-3,g-3,'#8b4a2b',7,1);px(b,x-2,g-2,'#8b4a2b',1,2);px(b,x+2,g-2,'#8b4a2b',1,2);
+    px(b,x-3,g-7,'#8b4a2b',1,3);px(b,x-3,g-7,'#c2723f',7,1);px(b,x+3,g-7,'#8b4a2b',1,3);});
+}
+
+/* sprite */
+const SPR=[
+"...0000...",
+"..0PPPP0..",
+".0PPPPPP0.",
+"0PWWPPWWP0",
+"0PWKPPWKP0",
+"0PPPPPPPP0",
+"0PCPPPPCP0",
+".0PPKKPP0.",
+"..0P00P0..",
+"..00..00.."];
+const SPR2=SPR.slice(0,8).concat(["..0PP0P0..",".00..00..."]);
+let bodyCol='#ff4fa3';
+function drawSprite(x,y,frame,face){
+  const s=frame?SPR2:SPR;const ox=Math.round(x)-5,oy=Math.round(y)-10;
+  for(let j=0;j<10;j++)for(let i=0;i<10;i++){
+    const c=s[j][face<0?9-i:i];if(c==='.')continue;
+    ctx.fillStyle=c==='0'?'#1d1430':c==='P'?bodyCol:c==='W'?'#fff':c==='K'?'#1d1430':'#ffd1e8';
+    ctx.fillRect(ox+i,oy+j,1,1);
+  }
+}
+
+/* ---------- motion ---------- */
+let pos=-0.25,target=-0.25,face=1,landing=null,t0=performance.now();
+const parts=[];
+const clouds=[{x:40,y:14,w:14},{x:110,y:8,w:10},{x:150,y:22,w:12}];
+function charXY(p){if(p<EQMIN){return{x:sx(p),y:SEA+3}}return{x:sx(p),y:sy(phOf(p))}}
+function sparkle(n=16){const c=charXY(pos);const cols=['#ffe14d','#ff4fa3','#3be0ff','#5ee27a','#fff'];
+  if(RM)n=Math.min(n,6);
+  for(let i=0;i<n;i++)parts.push({x:c.x,y:c.y-6,vx:(rnd()-.5)*(RM?0:60),vy:-(RM?0:20+rnd()*50),life:RM?0.5:0.9+rnd()*.4,col:cols[i%cols.length]});}
+function puff(){const c=charXY(pos);for(let i=0;i<8;i++)parts.push({x:c.x,y:c.y-3,vx:(rnd()-.5)*(RM?0:30),vy:-(RM?0:10*rnd()),life:.6,col:'#e0e0e0'});}
+
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  const t=(now-t0)/1000;
+  // move
+  if(landing){
+    landing.t+=dt/(RM?0.01:3.2);
+    if(landing.t>=1){pos=target=landing.to;landing=null;sparkle(30);beep([523,659,784,1046,1318],.09)}
+  } else if(Math.abs(target-pos)>1e-4){
+    const sp=RM?99:0.9;const d=target-pos;face=d>=0?1:-1;
+    pos+=Math.sign(d)*Math.min(Math.abs(d),sp*dt);
+  }
+  ctx.clearRect(0,0,W,H);
+  ctx.drawImage(bgA,0,0);
+  // clouds
+  clouds.forEach(c=>{ if(!RM)c.x+=dt*2; if(c.x>W+20)c.x=-20; const x=Math.round(c.x);
+    ctx.fillStyle='#fff';ctx.fillRect(x,c.y,c.w,3);ctx.fillRect(x+2,c.y-2,c.w-6,2);ctx.fillRect(x+4,c.y-3,4,1);
+    ctx.fillStyle='#d6ecff';ctx.fillRect(x,c.y+3,c.w,1);});
+  ctx.drawImage(bgB,0,0);
+  // waves
+  const off=RM?0:Math.floor(t*4)%4;
+  for(let x=0;x<W;x++){if(groundY[x]!==null)break;if((x+off)%4===0){ctx.fillStyle='#fff';ctx.fillRect(x,SEA,2,1)}}
+  // pI flag + averaging lines
+  const fx=Math.round(sx(eqOf(PI))),fg=groundY[fx];
+  if(S.pi){
+    ctx.fillStyle='rgba(255,225,77,.95)';
+    [0.5,1.5].forEach(e=>{const bx=Math.round(sx(e)),by=groundY[bx]-8;const n=24;for(let i=0;i<=n;i+=2){ctx.fillRect(Math.round(bx+(fx-bx)*i/n),Math.round(by+(fg-12-by)*i/n),1,1)}});
+    ctx.fillStyle='#1d1430';ctx.fillRect(fx,fg-12,1,12);
+    const wv=RM?0:Math.floor(t*3)%2;
+    ctx.fillStyle='#ffe14d';ctx.fillRect(fx+1,fg-12,6,4);ctx.fillStyle='#ff4fa3';ctx.fillRect(fx+1,fg-9+wv,6,1);
+  } else {
+    ctx.fillStyle='rgba(29,20,48,.55)';for(let y=fg-12;y<fg;y+=2)ctx.fillRect(fx,y,1,1);
+  }
+  // character
+  let c=charXY(pos),walking=Math.abs(target-pos)>1e-3;
+  if(landing){
+    const k=landing.t, a=landing.from, b=landing.to;
+    const A=charXY(a),B=charXY(b);
+    const hx=A.x+(B.x-A.x)*k; const top=4;
+    const hy=k<.3? A.y+(top-A.y)*(k/.3) : top+(B.y-top)*((k-.3)/.7);
+    c={x:hx,y:hy};walking=false;face=-1;
+    if(k>.3){ // parachute
+      const ux=Math.round(hx)-7,uy=Math.round(hy)-19;
+      for(let i=0;i<15;i++){ctx.fillStyle=(Math.floor(i/3)%2)?'#ffe14d':'#ff4fa3';ctx.fillRect(ux+i,uy+(i<2||i>12?2:i<4||i>10?1:0),1,3-(i<2||i>12?1:0))}
+      ctx.fillStyle='#1d1430';ctx.fillRect(ux,uy+4,1,6);ctx.fillRect(ux+14,uy+4,1,6);
+    }
+  }
+  const bob=(walking&&!RM)?(Math.floor(t*8)%2):0;
+  if(pos<EQMIN&&!landing&&!RM)c.y+=Math.floor(t*2)%2;
+  drawSprite(c.x,c.y-bob,walking&&!RM?Math.floor(t*8)%2:0,face);
+  // particles
+  for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.life-=dt;if(p.life<=0){parts.splice(i,1);continue}
+    p.vy+=90*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;ctx.fillStyle=p.col;ctx.fillRect(Math.round(p.x),Math.round(p.y),2,2);}
+  updateOverlay(c);
+  requestAnimationFrame(frame);
+}
+
+/* overlay labels (HTML text over the pixel canvas) */
+const ov=$('#ov');let badge,phchip,piLab;
+const pct=(x,y)=>`left:${x/W*100}%;top:${y/H*100}%`;
+function buildOverlay(){
+  let h='';
+  for(let t=0;t<=12;t+=2)h+=`<span class="lab tick" style="${pct(X0-5,sy(t))}">${t}</span>`;
+  h+=`<span class="lab" style="${pct(X0-5,sy(13.4)+1)}">pH</span>`;
+  [0,1,2,3].forEach(e=>{h+=`<span class="lab tick" style="${pct(sx(e)+(e===0?4:e===3?-3:0),H-3)}">${e}</span>`});
+  h+=`<span class="lab tick" style="${pct(128,H-9)}" dir="rtl">→ OH⁻ שנוספו (שווי ערך)</span>`;
+  h+=`<span class="lab" style="${pct(14,SEA+9)}" dir="rtl">ים החומצה</span>`;
+  h+=`<span class="lab" style="${pct(92,4)}" dir="rtl">שמי הבסיס</span>`;
+  [['pKa₁',0.5,'1.88'],['pKa₂',1.5,'3.65'],['pKa₃',2.5,'9.60']].forEach(([n,e,v])=>{const x=Math.round(sx(e));h+=`<span class="lab" style="${pct(x,groundY[x]+7)}">${n} ${v}</span>`});
+  const fx=Math.round(sx(eqOf(PI)));
+  h+=`<span class="lab pi" id="piLab" style="${pct(fx,groundY[fx]+15)}"></span>`;
+  h+=`<span class="phchip" id="phchip"></span><span class="cbadge" id="cbadge"></span>`;
+  ov.innerHTML=h;badge=$('#cbadge');phchip=$('#phchip');piLab=$('#piLab');
+}
+let badgeExtra='';
+function updateOverlay(c){
+  badge.style.left=(c.x/W*100)+'%';badge.style.top=((c.y-12)/H*100)+'%';
+  const html=nm()+badgeExtra;if(badge._h!==html){badge.innerHTML=html;badge._h=html}
+  const ph=pos<EQMIN?'0.60':phOf(pos).toFixed(2);const t='pH '+ph;if(phchip.textContent!==t)phchip.textContent=t;
+  const pl=S.pi?'pI 2.77':'pI ?';if(piLab.textContent!==pl){piLab.textContent=pl;piLab.classList.toggle('ghost',!S.pi)}
+}
+function floater(txt,cls=''){const c=charXY(pos);const el=document.createElement('span');el.className='floater '+cls;el.textContent=txt;
+  el.style.left=(c.x/W*100)+'%';el.style.top=((c.y-14)/H*100)+'%';ov.appendChild(el);setTimeout(()=>el.remove(),1300)}
+
+/* ---------- sound ---------- */
+let AC=null;
+function beep(fr,dur=.08,type='square',vol=.045){if(S.mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();
+  const t=AC.currentTime;fr.forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(vol,t+i*dur);g.gain.exponentialRampToValueAtTime(.0001,t+i*dur+dur*.95);o.connect(g);g.connect(AC.destination);o.start(t+i*dur);o.stop(t+i*dur+dur)})}catch(e){}}
+const SPK_ON='<svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path d="M1 4h2v2H1zM3 3h1v4H3zM4 2h1v6H4zM6 4h1v2H6zM8 2h1v6H8z" fill="#1d1430"/></svg>';
+const SPK_OFF='<svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path d="M1 4h2v2H1zM3 3h1v4H3zM4 2h1v6H4zM6 3h1v1H6zM8 3h1v1H8zM7 4h1v2H7zM6 6h1v1H6zM8 6h1v1H8z" fill="#1d1430"/></svg>';
+function paintMute(){const b=$('#mute');b.innerHTML=S.mute?SPK_OFF:SPK_ON;b.setAttribute('aria-pressed',S.mute?'true':'false');b.setAttribute('aria-label',S.mute?'הפעלת צלילים':'השתקת צלילים')}
+$('#mute').addEventListener('click',()=>{S.mute=!S.mute;save();paintMute();beep([660])});
+
+/* ---------- HUD + scoring ---------- */
+function hud(){
+  $('#who').textContent=S.name||'שחקנית';$('#score').textContent=S.score;
+  const st=$('#streak');[...st.children].forEach((i,k)=>i.classList.toggle('on',k<Math.min(S.streak,5)));st.classList.toggle('hot',S.streak>=3);
+  st.setAttribute('aria-label','רצף: '+S.streak);
+}
+const MIS=[
+  {k:'build',tab:'בנייה',kick:'מדור הרכבות',a:EQMIN,b:0.5,steps:6},
+  {k:'pi',tab:'pI',kick:'דיווח חי מהעקומה',a:0.5,b:1.5,steps:2},
+  {k:'sort',tab:'שכונות',kick:'מדור רכילות',a:1.5,b:2.2,steps:8},
+  {k:'bond',tab:'קשר',kick:'מדור חתונות',a:2.2,b:2.5,steps:3},
+  {k:'boss',tab:'בוסית',kick:'ראיון בלעדי',a:2.5,b:EQMAX,steps:5}];
+const cur=()=>MIS[S.mission];
+function good(pts=10,{move=true,msg=''}={}){
+  S.streak++;S.best=Math.max(S.best,S.streak);
+  const bonus=S.streak>=3?5:0;S.score+=pts+bonus;
+  if(move&&cur()){const m=cur();target=Math.min(m.b,Math.max(target,m.a)+(m.b-m.a)/m.steps)}
+  sparkle();floater('+'+(pts+bonus)+(bonus?' רצף!':''));beep([660,880,1320],.07);hud();save();
+}
+function bad({move=true}={}){
+  S.streak=0;
+  if(move&&cur()){const m=cur();target=Math.max(m.a,target-(m.b-m.a)/m.steps*0.6)}
+  puff();floater('אופס','bad');beep([300,190],.12,'triangle',.06);
+  if(!RM){const w=$('#world');w.classList.remove('shake');void w.offsetWidth;w.classList.add('shake')}
+  hud();save();
+}
+function corr(lead,why){return `<div class="corr"><span class="stamp">תיקון</span><p>אמש דווח בטעות ${lead}</p><p class="why">${why}</p></div>`}
+function scoop(tag,text){return `<div class="scoop"><span class="stamp">${tag}</span><p>${text}</p></div>`}
+function setFb(html){const fb=$('#fb');if(!fb)return;fb.innerHTML=html;if(html)requestAnimationFrame(()=>{const r=fb.getBoundingClientRect();if(r.bottom>innerHeight)fb.scrollIntoView({block:'nearest',behavior:RM?'auto':'smooth'})})}
+
+/* stage strip + header */
+function head(i,headline,lede){
+  let s='<ol class="stages">';
+  MIS.forEach((m,k)=>{const st=k<S.maxM||S.done?'done':'';const now=k===S.mission?'now':'';const lock=k>S.maxM&&!S.done;
+    s+=`<li><button data-stage="${k}" class="${now||st}" ${lock?'disabled':''} aria-label="משימה ${k+1}: ${m.tab}">${k+1}<br>${m.tab}</button></li>`});
+  s+='</ol>';
+  return s+`<span class="kicker">חדשות התא · ${MIS[i].kick}</span><h1 class="headline">${headline}</h1><p class="lede">${lede}</p>`;
+}
+function wireStages(p){p.querySelectorAll('[data-stage]').forEach(b=>b.addEventListener('click',()=>{const k=+b.dataset.stage;if(b.disabled)return;goMission(k)}))}
+function goMission(k){S.mission=k;S.maxM=Math.max(S.maxM,k);landing=null;pos=Math.max(pos,-0.25);target=MIS[k].a;if(k===1)target=MIS[1].a;save();render()}
+function nextBtn(label,fn){const b=document.createElement('button');b.className='btn pink big';b.innerHTML=label;b.addEventListener('click',fn);return b}
+function finishMission(){const m=cur();target=m.b;S.maxM=Math.max(S.maxM,S.mission+1);S.mission++;save();render();window.scrollTo({top:0,behavior:RM?'auto':'smooth'})}
+
+/* generic MCQ with shuffled options */
+function mcq(el,q,{oneShot=false,onRight,onWrong}){
+  const opts=shuffle(q.opts.map((t,i)=>({t,ok:i===q.c})));
+  el.innerHTML=`<p class="q">${q.q}</p><div class="opts"></div>`;
+  const box=el.querySelector('.opts');
+  opts.forEach(o=>{const b=document.createElement('button');b.className='opt';b.innerHTML=o.t;b.dataset.ok=o.ok?'1':'0';
+    b.addEventListener('click',()=>{
+      if(o.ok){b.classList.add('right');box.querySelectorAll('button').forEach(x=>x.disabled=true);onRight&&onRight()}
+      else{b.classList.add('wrong');b.disabled=true;
+        if(oneShot){box.querySelectorAll('button').forEach(x=>{x.disabled=true;if(x.dataset.ok==='1')x.classList.add('right')})}
+        onWrong&&onWrong(o.t,q.opts[q.c])}
+    });box.appendChild(b)});
+}
+
+/* drag helper: pointer events, tap fallback, keyboard via click(detail 0) */
+function draggable(el,{onTap,onDrop,onOver}){
+  el.addEventListener('pointerdown',e=>{
+    if(e.button>0)return;e.preventDefault();
+    const sx0=e.clientX,sy0=e.clientY;let ghost=null;
+    try{el.setPointerCapture(e.pointerId)}catch(_){}
+    const mv=ev=>{
+      if(!ghost&&Math.hypot(ev.clientX-sx0,ev.clientY-sy0)>8){ghost=el.cloneNode(true);ghost.classList.add('ghostchip');ghost.removeAttribute('id');document.body.appendChild(ghost);el.classList.add('dragging')}
+      if(ghost){ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px';onOver&&onOver(document.elementFromPoint(ev.clientX,ev.clientY))}
+    };
+    const up=ev=>{el.removeEventListener('pointermove',mv);el.removeEventListener('pointerup',up);el.removeEventListener('pointercancel',up);
+      el.classList.remove('dragging');onOver&&onOver(null);
+      if(ghost){ghost.remove();if(ev.type==='pointerup')onDrop(document.elementFromPoint(ev.clientX,ev.clientY))}
+      else if(ev.type==='pointerup')onTap();
+    };
+    el.addEventListener('pointermove',mv);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+  });
+  el.addEventListener('click',e=>{if(e.detail===0)onTap()});
+}
+
+/* ====================== MISSIONS ====================== */
+const P=$('#panel');
+function render(){
+  badgeExtra='';bodyCol='#ff4fa3';
+  if(S.mission<0)return intro();
+  if(S.mission>=MIS.length)return finale();
+  [mBuild,mPI,mSort,mBond,mBoss][S.mission]();
+  wireStages(P);
+}
+
+/* ---- intro ---- */
+function intro(){
+  const resume=S.maxM>0||S.done;
+  P.innerHTML=`<nav class="map" aria-label="מפת שלבים"><a href="index.html">שער</a><span class="here">1 · אמינו</span><a href="level2.html">2 · חלבונים</a></nav>
+  <span class="kicker">חדשות התא · גיליון 01</span>
+  <h1 class="headline">בלעדי: חומצת אמינו יצאה מהים החומצי והתחילה לטפס על עקומה</h1>
+  <p class="lede">זה לא גרף. זה העולם. הדמות הוורודה למעלה היא את, והיא עומדת לטפס על עקומת הטיטרציה של אספרטט. כל תשובה נכונה מקדמת אותך, כל טעות מחליקה אותך קצת אחורה. היעד: לנחות ב-pI.</p>
+  <label class="small" for="nm">איך לקרוא לך בעיתון?</label>
+  <input class="name" id="nm" maxlength="14" value="${nm()}" autocomplete="off">
+  <div id="go"></div>
+  <p class="note">5 משימות קצרות. ההתקדמות נשמרת בדפדפן הזה.</p>`;
+  const go=$('#go');
+  const start=k=>{S.name=($('#nm').value.trim()||'שחקנית').slice(0,14);hud();beep([523,784]);goMission(k)};
+  if(resume){const k=S.done?0:S.maxM;
+    go.appendChild(nextBtn(S.done?'לשחק שוב ←':`להמשיך: ${MIS[k].tab} ←`,()=>start(k)));
+    const r=document.createElement('button');r.className='btn ghost big';r.textContent='להתחיל מאפס';
+    r.addEventListener('click',()=>{const keepMute=S.mute,name=($('#nm').value.trim()||'שחקנית');S=Object.assign({},DEF,{mute:keepMute,name});save();pos=target=-0.25;start(0)});go.appendChild(r);
+  } else go.appendChild(nextBtn('יוצאות לדרך ←',()=>start(0)));
+}
+
+/* ---- 1. build ---- */
+const PARTS=[
+  {k:'cooh',t:'α-COOH',ok:true},{k:'nh3',t:'α-NH₃⁺',ok:true},{k:'h',t:'H',ok:true},{k:'r',t:'R',ok:true},
+  {k:'po4',t:'PO₄³⁻',ok:false,lead:'שקבוצת פוספט יושבת על פחמן α.',why:'פוספט שייך לנוקלאוטידים. על פחמן α יושבים ארבעה: <span class="f">α-COOH</span>, <span class="f">α-NH₃⁺</span>, <span class="f">H</span> ו-R.'},
+  {k:'oh',t:'OH',ok:false,lead:'ש-OH בודד מתחבר ישר לפחמן α.',why:'ה-OH פה הוא חלק מקבוצת ה-COOH (ואצל סרין הוא בתוך ה-R). על פחמן α: <span class="f">α-COOH</span>, <span class="f">α-NH₃⁺</span>, <span class="f">H</span> ו-R.'}];
+const RS=[
+  {f:'CH₃',he:'אלנין',ab:'Ala',ch:true,g:'אלנין. R קטן, ארבעה שכנים שונים, אז כיראלית.'},
+  {f:'CH₂OH',he:'סרין',ab:'Ser',ch:true,g:'סרין, עם OH בשרשרת. כיראלית.'},
+  {f:'CH₂–C₆H₅',he:'פנילאלנין',ab:'Phe',ch:true,g:'פנילאלנין והטבעת הארומטית שלה. כיראלית.'},
+  {f:'(CH₂)₄–NH₃⁺',he:'ליזין',ab:'Lys',ch:true,g:'ליזין, עם NH₃⁺ בקצה שרשרת ארוכה. כיראלית.'},
+  {f:'CH₂–COO⁻',he:'אספרטט',ab:'Asp',ch:true,g:'אספרטט, הכוכבת של העקומה שלנו. כיראלית.'},
+  {f:'H',he:'גליצין',ab:'Gly',ch:false}];
+function mBuild(){
+  P.innerHTML=head(0,'פחמן α נתפס עם ארבעה שותפים','הרכיבי חומצת אמינו: גררי חלק אל הפחמן או פשוט הקישי עליו. שניים מהחלקים כאן מתחזים.')+`
+  <div class="mol" id="mol" dir="ltr">
+    <div class="slot s-top" data-k="h">?</div>
+    <div class="slot s-left" data-k="nh3">?</div>
+    <div class="ca">C<sub>α</sub><i class="chir" id="chir"></i></div>
+    <div class="slot s-right" data-k="cooh">?</div>
+    <div class="slot s-bot r" data-k="r">?</div>
+  </div>
+  <div class="tray" id="tray"></div><div id="sub"></div><div class="fb" id="fb"></div>`;
+  let placed=0;const mol=$('#mol'),tray=$('#tray');
+  const place=(p,chip)=>{
+    if(chip.disabled)return;
+    if(!p.ok){chip.classList.remove('nope');void chip.offsetWidth;chip.classList.add('nope');bad();setFb(corr(p.lead,p.why));return}
+    const sl=mol.querySelector(`[data-k="${p.k}"]`);sl.textContent=p.t;sl.classList.add('filled');chip.remove();placed++;
+    good(10);setFb(scoop('בלעדי',`${p.t} התיישבה על פחמן α. ${placed}/4.`));
+    if(placed===4){tray.querySelectorAll('.chip').forEach(c=>c.remove());rPhase()}
+  };
+  shuffle(PARTS).forEach(p=>{const c=document.createElement('button');c.className='chip';c.textContent=p.t;c.setAttribute('aria-label','חלק: '+p.t);tray.appendChild(c);
+    draggable(c,{onTap:()=>place(p,c),onDrop:t=>{if(t&&t.closest('#mol'))place(p,c)},onOver:t=>mol.classList.toggle('hover',!!(t&&t.closest('#mol')))})});
+
+  function rPhase(){
+    const sub=$('#sub');
+    sub.innerHTML=`<span class="task-title">משימה: מצאי את ה-R שמבטלת את הכיראליות</span>
+      <p class="lede" style="margin:0 0 6px">כיראלית = ארבעה שכנים שונים על פחמן α. החליפי את R וראי מי את נהיית.</p>
+      <div class="rrow" id="rrow"></div><div class="idcard" id="idc"></div><div id="zq"></div>`;
+    let found=false;
+    shuffle(RS).forEach(r=>{const b=document.createElement('button');b.className='rbtn';b.textContent=r.f;b.setAttribute('aria-label','R = '+r.f);
+      b.addEventListener('click',()=>{if(found)return;
+        $('#rrow').querySelectorAll('.rbtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+        const sl=mol.querySelector('[data-k="r"]');sl.textContent=r.f;
+        $('#chir').textContent=r.ch?'כיראלית':'לא כיראלית!';$('#chir').classList.toggle('no',!r.ch);
+        $('#idc').innerHTML=`את עכשיו <b>${r.he}</b> · <span class="f">${r.ab}</span> · <span class="f">R = ${r.f}</span>`;
+        badgeExtra=' · '+r.ab;
+        if(r.ch){if(!b.classList.contains('tried')){S.score+=2;hud();floater('+2');beep([520],.06)}b.classList.add('tried');setFb(scoop('מבזק',r.g))}
+        else{found=true;good(15);setFb(scoop('סקנדל','גליצין נתפסה בלי מרכז כיראלי! ה-R שלה הוא H, כלומר על פחמן α יושבים שני מימנים זהים. בלי ארבעה שכנים שונים, אין כיראליות.'));zw()}
+      });$('#rrow').appendChild(b)});
+  }
+  function zw(){
+    const zq=$('#zq');
+    mcq(zq,{q:'ועכשיו לגוף: ב-pH 7.4, איך גליצין נראית רוב הזמן?',
+      opts:['צביטר-יון: <span class="f">NH₃⁺</span> וגם <span class="f">COO⁻</span>, ובסך הכול נטו 0','הכול מחובר: <span class="f">NH₃⁺</span> ו-<span class="f">COOH</span>, מטען <span class="f">+1</span>','הכול מפורק: <span class="f">NH₂</span> ו-<span class="f">COO⁻</span>, מטען <span class="f">−1</span>'],c:0},
+      {onRight:()=>{good(10);
+        const sc=mol.querySelector('[data-k="cooh"]');sc.innerHTML='COO⁻<span class="chg">−</span>';
+        const sn=mol.querySelector('[data-k="nh3"]');sn.innerHTML='NH₃⁺<span class="chg">+</span>';
+        setFb(scoop('צביטר-יון','ב-pH 7.4 ה-α-COOH (pKa בסביבות 2) כבר מסר פרוטון, וה-α-NH₃⁺ (pKa בסביבות 9 עד 10) עדיין מחזיק בו. חיובית ושלילית בו-זמנית, נטו אפס.'));
+        $('#fb').appendChild(nextBtn('לעקומה של אספרטט ←',finishMission));},
+       onWrong:(w)=>{bad();setFb(corr(`שב-pH 7.4 גליצין נראית כך: «${w.replace(/<[^>]+>/g,'')}».`,'ב-pH 7.4 ה-COOH כבר מסר פרוטון (COO⁻) וה-NH₃⁺ עדיין מחזיק בו. זה צביטר-יון: חיובי ושלילי בו-זמנית, נטו 0.'))}});
+  }
+}
+
+/* ---- 2. pI walk ---- */
+function mPI(){
+  P.innerHTML=head(1,'אספרטט מחפשת את נקודת האפס','הזיזי את ה-pH ותזוזי על העקומה. עצרי כשהמטען נטו בדיוק 0 ולחצי «לנחות כאן».')+`
+  <div class="phctl" dir="ltr"><button class="nud" id="minus" aria-label="להוריד pH">−</button>
+    <input type="range" id="ph" min="0.6" max="13" step="0.01" aria-label="pH"><button class="nud" id="plus" aria-label="להעלות pH">+</button></div>
+  <div class="phread" dir="ltr">pH <b id="phv"></b></div>
+  <div class="meter" dir="ltr"><div class="mscale"><span>+1</span><span>0</span><span>−1</span><span>−2</span></div>
+    <div class="mbar"><b class="zero"></b><i id="needle"></i></div><div class="mval" id="mval"></div></div>
+  <button class="btn big" id="land">לנחות כאן</button>
+  <div class="hint" id="hint"></div>
+  <div class="groups" id="groups" dir="ltr"></div>
+  <div id="sub"></div><div class="fb" id="fb"></div>`;
+  const G=[{l:'α-COOH',pk:0,a:'COOH',b:'COO⁻',sign:-1},{l:'R: CH₂–COOH',pk:1,a:'COOH',b:'COO⁻',sign:-1},{l:'α-NH₃⁺',pk:2,a:'NH₃⁺',b:'NH₂',sign:1}];
+  const gEl=$('#groups');
+  gEl.innerHTML=G.map((g,i)=>`<div class="grow"><div><b>${g.l}</b><small>pKa ${PK[g.pk].toFixed(2)}</small></div><span class="form" id="fm${i}"></span><span class="ch" id="ch${i}"></span><div class="bar"><i id="br${i}"></i></div></div>`).join('');
+  const sl=$('#ph');let locked=false,lastZone=-1;
+  const startPH=S.pi?1.88:1.88;sl.value=startPH;
+  function upd(fromUser){
+    const pH=+sl.value;$('#phv').textContent=pH.toFixed(2);
+    if(!locked){target=eqOf(pH);if(!fromUser)pos=target}
+    G.forEach((g,i)=>{const d=dep(PK[g.pk],pH);const contrib=g.sign<0?-d:(1-d);
+      const f=$('#fm'+i);const deprot=d>=.5;f.textContent=deprot?g.b:g.a;
+      f.className='form '+(g.sign<0?(deprot?'neg':'neu'):(deprot?'neu':'pos'));
+      $('#ch'+i).textContent=(contrib>=0?'+':'−')+Math.abs(contrib).toFixed(2);$('#br'+i).style.width=(d*100)+'%'});
+    const q=qOf(pH);const qs=(Math.abs(q)<0.005?'0.00':(q>0?'+':'−')+Math.abs(q).toFixed(2));
+    $('#mval').innerHTML='מטען נטו <span class="f">'+qs+'</span>';$('#mval').classList.toggle('zero',Math.abs(q)<0.05);
+    $('#needle').style.left=Math.max(0,Math.min(100,(1-q)/3*100))+'%';
+    bodyCol=Math.abs(q)<0.05?'#ffe14d':q>0?'#ff4fa3':'#3be0ff';
+    badgeExtra=` <b>${qs}</b>`;
+    let z=-1;PK.forEach((k,i)=>{if(Math.abs(pH-k)<0.12)z=i});
+    if(z!==lastZone){lastZone=z;if(z>=0&&fromUser)beep([440+z*110],.05)}
+    $('#hint').textContent=z>=0?`ספסל pKa${'₁₂₃'[z]}: חצי מהקבוצה כבר מסרה פרוטון. כאן העקומה שטוחה, אזור בופר.`:'';
+  }
+  sl.addEventListener('input',()=>upd(true));
+  const nud=d=>{if(locked)return;sl.value=(Math.min(13,Math.max(.6,+sl.value+d))).toFixed(2);upd(true)};
+  $('#minus').addEventListener('click',()=>nud(-0.05));$('#plus').addEventListener('click',()=>nud(0.05));
+  upd(false);
+  $('#land').addEventListener('click',()=>{if(locked)return;const pH=+sl.value,q=qOf(pH);
+    if(Math.abs(pH-PI)<=0.1){locked=true;sl.disabled=true;$('#land').disabled=true;S.pi=true;target=eqOf(PI);good(20,{move:false});
+      setFb(scoop('נחיתה','נחתת על pI. דגל נעוץ.')+`<div class="avg" dir="ltr">pI = ( <span class="k">1.88</span> + <span class="k">3.65</span> ) / 2 = <b>2.77</b></div>
+        <p style="font-size:14px">אלה שני ה-pKa שמקיפים את הצורה הניטרלית. ב-pH הזה ה-α-COO⁻ (−) מאזן את ה-α-NH₃⁺ (+), ושרשרת ה-R עדיין ברובה COOH. בעולם: הקווים הצהובים מחברים את שני הספסלים לדגל.</p><div id="lq"></div>`);
+      mcq($('#lq'),{q:'ולליזין, חומצת אמינו בסיסית: איזה זוג pKa ממצעים?',opts:['את שני ה-pKa הגבוהים','את שני ה-pKa הנמוכים','את שלושתם'],c:0},
+        {onRight:()=>{good(10,{move:false});target=MIS[1].b;badgeExtra='';
+          $('#lq').insertAdjacentHTML('beforeend',`<p style="font-size:14px;margin-top:6px"><b>נכון.</b> בבסיסיות הצורה הניטרלית יושבת בין שני ה-pKa הגבוהים.</p>`);
+          $('#lq').appendChild(nextBtn('לגיליון הבא ←',finishMission))},
+         onWrong:w=>{bad({move:false});$('#lq').insertAdjacentHTML('beforeend',corr(`שבבסיסיות ממצעים «${w}».`,'בבסיסיות (Lys, Arg, His) ממצעים את שני ה-pKa הגבוהים, כי שם יושבת הצורה הניטרלית.'))}});
+    } else {bad({move:false});const qs=(q>0?'+':'−')+Math.abs(q).toFixed(2);
+      setFb(corr(`שב-pH ${pH.toFixed(2)} המטען נטו הוא 0.`,`בפועל הוא ${qs}. ${q>0?'עדיין חיובית מדי, העלי את ה-pH.':'כבר שלילית מדי, הורידי את ה-pH.'}`))}
+  });
+}
+
+/* ---- 3. sort R groups ---- */
+const ZONES=[{k:'hyd',n:'הידרופוביות',one:'הידרופובית',s:'בורחות מהמים, לליבה',why:'בורחת מהמים לליבת החלבון'},{k:'pol',n:'קוטביות לא טעונות',one:'קוטבית לא טעונה',s:'קשרי מימן',why:'יוצרת קשרי מימן, בלי מטען'},{k:'acid',n:'חומציות',one:'חומצית',s:'מטען שלילי (−)',why:'מטען שלילי ב-pH של הגוף'},{k:'base',n:'בסיסיות',one:'בסיסית',s:'מטען חיובי (+)',why:'מטען חיובי ב-pH של הגוף'}];
+const AAS=[
+  {ab:'Val',he:'ואלין',f:'CH(CH₃)₂',z:'hyd',g:'ואלין נצפתה בליבת החלבון. מים? לא מכירה.'},
+  {ab:'Phe',he:'פנילאלנין',f:'CH₂–C₆H₅',z:'hyd',g:'פנילאלנין והטבעת הארומטית שלה מתחבאות בפנים.'},
+  {ab:'Ser',he:'סרין',f:'CH₂OH',z:'pol',g:'סרין עם OH ביד: יוצרת קשרי מימן, בלי מטען.'},
+  {ab:'Asn',he:'אספרגין',f:'CH₂–CONH₂',z:'pol',g:'אספרגין: קבוצת אמיד, קוטבית ולא טעונה.'},
+  {ab:'Glu',he:'גלוטמט',f:'(CH₂)₂–COO⁻',z:'acid',g:'גלוטמט: עוד COO⁻ בשרשרת, שלילית ב-pH של הגוף.'},
+  {ab:'Asp',he:'אספרטט',f:'CH₂–COO⁻',z:'acid',g:'אספרטט, הכוכבת מהעקומה. חומצית, כמובן.'},
+  {ab:'Lys',he:'ליזין',f:'(CH₂)₄–NH₃⁺',z:'base',g:'ליזין: NH₃⁺ בקצה שרשרת ארוכה. חיובית.'},
+  {ab:'Arg',he:'ארגינין',f:'(CH₂)₃–NH–C(NH₂)₂⁺',z:'base',g:'ארגינין והקבוצה הגואנידינית שלה. חיובית.'}];
+function mSort(){
+  P.innerHTML=head(2,'מי מתחבאת בליבה ומי מסתובבת עם המים?','שלחי כל חומצת אמינו לשכונה שלה: גררי את הכרטיס לאזור, או הקישי על האזור.')+`
+  <div id="cardbox"></div><div class="prog" id="prog"></div>
+  <div class="zones" id="zones">${ZONES.map(z=>`<button class="zone z-${z.k}" data-z="${z.k}"><b>${z.n}</b><small>${z.s}</small><span class="cnt" id="c-${z.k}">0</span></button>`).join('')}</div>
+  <div class="fb" id="fb"></div>`;
+  const deck=shuffle(AAS);let i=0;const cnt={hyd:0,pol:0,acid:0,base:0};const zn=$('#zones');
+  function show(){
+    $('#prog').textContent=`${i}/${deck.length}`;
+    if(i>=deck.length){$('#cardbox').innerHTML='';$('#fb').appendChild(nextBtn('לחתונה ←',finishMission));return}
+    const a=deck[i];
+    $('#cardbox').innerHTML=`<div class="card" id="card" tabindex="0"><span class="ab">${a.ab}</span><span class="nm">${a.he}</span><span class="fr">R = ${a.f}</span></div>`;
+    const card=$('#card');
+    draggable(card,{onTap:()=>{},onDrop:t=>{const z=t&&t.closest('.zone');if(z)answer(z.dataset.z)},
+      onOver:t=>{zn.querySelectorAll('.zone').forEach(z=>z.classList.toggle('hover',!!(t&&t.closest('.zone')===z)))}});
+  }
+  function answer(zk){
+    if(i>=deck.length)return;const a=deck[i];
+    if(zk===a.z){cnt[zk]++;$('#c-'+zk).textContent=cnt[zk];const z=zn.querySelector(`[data-z="${zk}"]`);z.classList.remove('flash');void z.offsetWidth;z.classList.add('flash');
+      good(10);setFb(scoop('רכילות',a.g));i++;show()}
+    else{bad();const card=$('#card');card.classList.remove('nope');void card.offsetWidth;card.classList.add('nope');
+      const W1=ZONES.find(z=>z.k===zk),R=ZONES.find(z=>z.k===a.z);
+      setFb(corr(`ש${a.he} גרה בשכונת ה${W1.n}.`,`היא בכלל ${R.one}: ${R.why}.`))}
+  }
+  zn.querySelectorAll('.zone').forEach(z=>z.addEventListener('click',()=>answer(z.dataset.z)));
+  show();
+}
+
+/* ---- 4. peptide bond ---- */
+function mBond(){
+  P.innerHTML=head(3,'גליצין ואלנין מתחתנות. מולקולת מים עוזבת את האולם','הקישי על קבוצה באחת המולקולות, ואז על קבוצה במולקולה השנייה. מי מתחברת למי?')+`
+  <div class="pep" id="pep" dir="ltr">
+    <div class="aa"><span class="tag">Gly</span><button class="grp" data-m="A" data-g="N">H₂N</button><span class="core">–CH₂–</span><button class="grp" data-m="A" data-g="C">COOH</button></div>
+    <div class="aa"><span class="tag">Ala</span><button class="grp" data-m="B" data-g="N">H₂N</button><span class="core">–CH(CH₃)–</span><button class="grp" data-m="B" data-g="C">COOH</button></div>
+  </div><div id="res"></div><div id="bq"></div><div class="fb" id="fb"></div>`;
+  let sel=null,doneB=false;
+  P.querySelectorAll('.grp').forEach(b=>b.addEventListener('click',()=>{
+    if(doneB)return;
+    if(!sel){sel=b;b.classList.add('sel');beep([520],.05);return}
+    if(sel===b){b.classList.remove('sel');sel=null;return}
+    const a=sel;sel.classList.remove('sel');sel=null;
+    if(a.dataset.m===b.dataset.m){bad();setFb(corr('שקשר פפטידי נוצר בתוך אותה מולקולה.','קשר פפטידי מחבר שתי חומצות אמינו: COOH של אחת עם NH₂ של השנייה.'));return}
+    if(a.dataset.g===b.dataset.g){const two=a.dataset.g==='C'?'שתי קבוצות COOH':'שתי קבוצות NH₂';bad();setFb(corr(`ש${two} מתחתנות.`,'קשר פפטידי נוצר בין COOH של אחת ל-NH₂ של השנייה, ומשתחררת מולקולת מים.'));return}
+    doneB=true;const c=a.dataset.g==='C'?a:b;const glyFirst=c.dataset.m==='A';
+    $('#pep').style.opacity='.35';
+    $('#res').innerHTML=`<div class="dipep">${glyFirst?'H₂N–CH₂–':'H₂N–CH(CH₃)–'}<span class="bond">CO–NH</span>${glyFirst?'–CH(CH₃)–COOH':'–CH₂–COOH'}<span class="water">H₂O</span></div>`;
+    floater('H₂O','water');good(15);
+    setFb(scoop('מזל טוב',`נוצר <b>${glyFirst?'Gly-Ala':'Ala-Gly'}</b>. ה-COOH של ${glyFirst?'גליצין':'אלנין'} והאמין של ${glyFirst?'אלנין':'גליצין'} נקשרו, ונשאר קשר אמידי <span class="f">–CO–NH–</span>. אם היית מחברת הפוך, היה יוצא ${glyFirst?'Ala-Gly':'Gly-Ala'}: דיפפטיד אחר.`));
+    q1();
+  }));
+  function q1(){mcq($('#bq'),{q:'מה עזב את החתונה?',opts:['מולקולת מים, <span class="f">H₂O</span>','פחמן דו־חמצני, <span class="f">CO₂</span>','אמוניה, <span class="f">NH₃</span>'],c:0},
+    {onRight:()=>{good(10);setTimeout(q2,RM?0:500)},onWrong:w=>{bad();setFb(corr(`שבחתונה יצא «${w.replace(/<[^>]+>/g,'')}».`,'ביצירת קשר פפטידי משתחררת מולקולת מים: OH מה-COOH ו-H מה-NH₂.'))}})}
+  function q2(){mcq($('#bq'),{q:'למה הקשר הפפטידי מישורי וקשיח יחסית?',opts:['יש לו אופי חלקי של קשר כפול','הוא קשר יוני','הוא קשר הידרופובי'],c:0},
+    {onRight:()=>{good(10);setFb(scoop('ניתוח','האופי הכפול החלקי מונע סיבוב חופשי סביב הקשר, וזה משפיע על איך החלבון מתקפל. שרשרת ארוכה של קשרים כאלה = פפטיד או חלבון.'));$('#fb').appendChild(nextBtn('לראיון עם הבוסית ←',finishMission))},
+     onWrong:w=>{bad();setFb(corr(`שהקשר הפפטידי הוא «${w}».`,'הוא קשר אמידי עם אופי חלקי של קשר כפול, ולכן מישורי וקשיח יחסית.'))}})}
+}
+
+/* ---- 5. boss quiz (original 5 questions, shuffled answers) ---- */
+const BOSS=[
+  {q:'מה מבדיל בין חומצות אמינו שונות?',opts:['הקבוצה הקרבוקסילית','השרשרת הצדדית R','הקבוצה האמינית','אטום המימן'],c:1,exp:'רק ה-R משתנה. השלד (<span class="f">α-COOH</span>, <span class="f">α-NH₃⁺</span>, <span class="f">H</span>) משותף לכולן.'},
+  {q:'מהו צביטר-יון?',opts:['מולקולה טעונה חיובית בלבד','מולקולה עם מטען חיובי ושלילי בו-זמנית','מולקולה ניטרלית לגמרי','רק במצב חומצי'],c:1,exp:'חיובי ושלילי בו-זמנית, ונטו אפס.'},
+  {q:'איך מחשבים pI של חומצת אמינו חומצית?',opts:['ממוצע כל ה-pKa','שני ה-pKa הנמוכים','שני ה-pKa הגבוהים','רק pKa של R'],c:1,exp:'שני ה-pKa הנמוכים שמקיפים את הצורה הניטרלית. אצל Asp: <span class="f">(1.88 + 3.65) / 2 = 2.77</span>.'},
+  {q:'קשר פפטידי הוא קשר...',opts:['אסטרי','אמידי','יוני','הידרופובי'],c:1,exp:'אמידי (<span class="f">–CO–NH–</span>), נוצר בין COOH ל-NH₂ עם שחרור מים.'},
+  {q:'איזו חומצת אמינו אינה כיראלית?',opts:['אלנין','גליצין','ואלין','פנילאלנין'],c:1,exp:'גליצין. ה-R שלה הוא מימן, אז אין לפחמן α ארבעה שכנים שונים.'}];
+function mBoss(){
+  P.innerHTML=head(4,'ראיון בלעדי: הבוסית שואלת חמש שאלות','ניסיון אחד לכל שאלה. צריך לפחות 3 מתוך 5 כדי לנחות ב-pI.')+`
+  <div class="bossbar" id="bb">${BOSS.map(()=>'<i></i>').join('')}</div><div id="bq"></div><div class="fb" id="fb"></div>`;
+  let i=0,right=0;const marks=[...$('#bb').children];
+  function ask(){
+    if(i>=BOSS.length)return end();
+    marks.forEach((m,k)=>m.classList.toggle('cur',k===i));setFb('');
+    const q=BOSS[i];
+    const box=$('#bq');
+    mcq(box,{q:`${i+1}/5 · ${q.q}`,opts:q.opts,c:q.c},{oneShot:true,
+      onRight:()=>{right++;marks[i].className='ok';good(20);setFb(scoop('נכון',q.exp));$('#fb').appendChild(nextBtn(i<4?'לשאלה הבאה ←':'לתוצאות ←',()=>{i++;ask()}))},
+      onWrong:(w,r)=>{marks[i].className='no';bad();setFb(corr(`שהתשובה היא «${w}».`,`הנכונה: «${r}». ${q.exp}`));$('#fb').appendChild(nextBtn(i<4?'לשאלה הבאה ←':'לתוצאות ←',()=>{i++;ask()}))}});
+  }
+  function end(){
+    S.boss=right;const st=right>=5?3:right>=4?2:right>=3?1:0;
+    if(st===0){save();P.querySelector('#bq').innerHTML='';
+      setFb(corr(`שהבוסית השתכנעה (${right}/5).`,'צריך לפחות 3 מתוך 5. התשובות מתערבבות מחדש בכל ניסיון.'));
+      $('#fb').appendChild(nextBtn('עוד ראיון ←',()=>{target=MIS[4].a;mBoss();wireStages(P)}));return}
+    S.stars=Math.max(S.stars,st);S.done=true;S.maxM=MIS.length;S.mission=MIS.length;target=EQMAX;save();
+    // landing on pI by parachute
+    setTimeout(()=>{landing={t:0,from:pos,to:eqOf(PI)};target=eqOf(PI)},RM?0:600);
+    render();window.scrollTo({top:0,behavior:RM?'auto':'smooth'});
+  }
+  ask();
+}
+
+/* ---- finale ---- */
+function finale(){
+  const st=S.stars;
+  P.innerHTML=`<nav class="map" aria-label="מפת שלבים"><a href="index.html">שער</a><span class="here">1 · אמינו</span><a href="level2.html">2 · חלבונים</a></nav>
+  <ol class="stages">${MIS.map((m,k)=>`<li><button data-stage="${k}" class="done">${k+1}<br>${m.tab}</button></li>`).join('')}</ol>
+  <span class="kicker">חדשות התא · גיליון סגור</span>
+  <h1 class="headline">${nm()} נחתה ב-pI</h1>
+  <div class="stars" aria-label="${st} כוכבים">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div>
+  <div class="stats3"><div><b>${S.boss}/5</b>בוסית</div><div><b>${S.best}</b>רצף שיא</div><div><b>${S.score}</b>נקודות</div></div>
+  <hr class="rule">
+  <p class="lede" style="margin:0"><b>מה נכנס לעיתון:</b></p>
+  <ul class="recap">
+    <li>על פחמן α יושבים <span class="f">α-COOH</span>, <span class="f">α-NH₃⁺</span>, <span class="f">H</span> ו-R. רק ה-R משתנה.</li>
+    <li>גליצין (<span class="f">R = H</span>) לא כיראלית.</li>
+    <li>ב-pH של הגוף: צביטר-יון, חיובי ושלילי בו-זמנית, נטו 0.</li>
+    <li>pI של Asp: <span class="f">(1.88 + 3.65) / 2 = 2.77</span>. בבסיסיות ממצעים את שני ה-pKa הגבוהים.</li>
+    <li>קשר פפטידי: <span class="f">COOH + NH₂</span>, מים יוצאים, ונשאר <span class="f">–CO–NH–</span> קשיח ומישורי.</li>
+  </ul>
+  <div id="fin"></div>
+  <p class="note">הגיליון הבא: חלבונים, מבנה וקיפול.</p>`;
+  const f=$('#fin');
+  if(st<3)f.appendChild(nextBtn('עוד ראיון עם הבוסית, על שלושה כוכבים ←',()=>goMission(4)));
+  const next=document.createElement('a');next.className='btn pink big';next.href='level2.html';next.textContent='לגיליון 2: חלבונים';f.appendChild(next);
+  const again=document.createElement('button');again.className='btn ghost big';again.textContent='לשחק את השלב מההתחלה';
+  again.addEventListener('click',()=>{landing=null;pos=target=MIS[0].a;goMission(0)});f.appendChild(again);
+  wireStages(P);
+}
+
+/* ---------- boot ---------- */
+prerender();buildOverlay();paintMute();hud();
+if(S.mission>=MIS.length){pos=target=eqOf(PI)}
+else if(S.mission>=0){pos=target=MIS[S.mission].a}
+else{pos=target=-0.25}
+render();
+requestAnimationFrame(t=>{last=t;requestAnimationFrame(frame)});
+window.__game={get S(){return S},get pos(){return pos},get target(){return target},PI,qOf,eqOf};
+})();
+</script>
+</body>
+</html>
